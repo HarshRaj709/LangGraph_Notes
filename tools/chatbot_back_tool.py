@@ -48,6 +48,9 @@ def wheather_info(city:str) -> float:
 
 llm_with_tools = chat_model.bind_tools([wheather_info])
 
+# tool Node
+tool_node = ToolNode([wheather_info])
+
 
 
 #1. define state
@@ -69,8 +72,7 @@ def chat_node(state: ChatState) -> dict:
     response = llm_with_tools.invoke(query)
     return {"messages": [response]} #append the response to the existing messages in the state
 
-# tool Node
-tool_node = ToolNode([wheather_info])
+
 #3. define node
 graph.add_node("chat_node", chat_node)
 graph.add_node("tools", tool_node)              # define node of tool

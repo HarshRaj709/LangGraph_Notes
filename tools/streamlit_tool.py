@@ -100,15 +100,33 @@ if user_input:
         st.text(user_input)
 
     #generate answer
-    with st.chat_message('assistant'):
-        ai_message = st.write_stream(
-            message_chunk.content for message_chunk, metadata in  chatbot.stream(
+    with st.chat_message("assistant"):
+        tool_placeholder = st.empty()
+        def response_generator():
+
+            for message_chunk, metadata in chatbot.stream(
                 {"messages": [HumanMessage(content=user_input)]},
-                config= CONFIG,
-                stream_mode = 'messages'
-            )
-            if isinstance(message_chunk, AIMessageChunk)
-        )
+                config=CONFIG,
+                stream_mode="messages"
+            ):
+
+                # Tool Call Detected
+                if getattr(message_chunk, "tool_calls", None):
+                    tool_name = message_chunk.tool_calls[0]["name"]
+
+                    tool_placeholder.info(
+                        f"🔧 Using Tool: {tool_name}"
+                    )
+
+                # Tool Executed
+                if metadata.get("langgraph_node") == "tools":
+                    tool_placeholder.success(
+                        f"✅ Tool Executed: {message_chunk.name}"
+                    )
+                if isinstance(message_chunk, AIMessageChunk):
+                    yield message_chunk.content
+            tool_placeholder.empty()
+        ai_message = st.write_stream(response_generator())
     # append generated message
     st.session_state['message_history'].append({"role":"assistant", "content":ai_message})
     # print("this is state", st.session_state)
