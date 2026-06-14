@@ -6,6 +6,7 @@ from langchain_openai import ChatOpenAI
 from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.graph.message import add_messages
 
+from langchain_community.tools import DuckDuckGoSearchRun
 from langgraph.prebuilt import ToolNode, tools_condition
 from langchain.tools import tool
 
@@ -39,6 +40,8 @@ def retrieve_threads():
 
                                             #tools
 
+search_tool = DuckDuckGoSearchRun(region="us-en")
+
 @tool
 def wheather_info(city:str) -> float:
     """Returns te temperature of city in celcius"""
@@ -46,10 +49,12 @@ def wheather_info(city:str) -> float:
     wheather_data = data.json()
     return wheather_data["current"]["temp_c"]
 
-llm_with_tools = chat_model.bind_tools([wheather_info])
+tools = [wheather_info, search_tool]
+
+llm_with_tools = chat_model.bind_tools(tools)
 
 # tool Node
-tool_node = ToolNode([wheather_info])
+tool_node = ToolNode(tools)
 
 
 
